@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
-use Tymon\JWTAuth\Contracts\JWTSubject;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 use Laravel\Sanctum\HasApiTokens;
+
 use Illuminate\Validation\Rule;
+
 
 use Illuminate\Database\Eloquent\Relations\{
   HasMany,
@@ -75,6 +77,9 @@ class User extends Authenticatable implements JWTSubject
   protected $hidden = [
     'password',
     'remember_token',
+    'reset_token',
+    'is_active',
+    'deleted_at'
   ];
 
   /**
@@ -100,6 +105,41 @@ class User extends Authenticatable implements JWTSubject
     'fl_name',
     'hash',
   ];
+
+
+  /**
+   * Email signup rules
+   *
+   * @return array
+   */
+  protected static function email_signup_rules()
+  {
+    return [
+      'email'    => 'required|string|email:rfc,strict,filter|unique:users',
+      // 'password' => 'required|alpha_dash|min:6',
+      'password' => [
+        'required',
+        'min:6',
+        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*(_|[^\w])).+$/'
+      ],
+    ];
+  }
+
+ /**
+   * Email signin rules
+   *
+   * @return array
+   */
+  protected static function email_signin_rules()
+  {
+    return [
+      'email'    => 'required|string|email:rfc,strict,filter',
+      'password' => [
+        'required',
+        'min:6',
+      ],
+    ];
+  }
 
   /**
    * Signup user rules
@@ -294,7 +334,7 @@ class User extends Authenticatable implements JWTSubject
   /**
    * Generate password
    */
-  public static function generate_password()
+  public static function generatePassword()
 	{
     $string = ['a','b','c','d','e','f','g','h','k','n','p','r','s','t','v','w','x','y','z'];
     $max = count($string) - 1;
@@ -306,10 +346,18 @@ class User extends Authenticatable implements JWTSubject
   }
 
   /**
-   * Courses
+   * Reviews
    */
-  public function courses(): HasMany
+  public function Reviews(): HasMany
   {
-    return $this->hasMany(Course::class, 'author_id', 'id');
+    return $this->hasMany(Review::class, 'recipient_id', 'id');
+  }
+
+  /**
+   * ReviewPosts
+   */
+  public function ReviewPosts(): HasMany
+  {
+    return $this->hasMany(Review::class, 'author_id', 'id');
   }
 }

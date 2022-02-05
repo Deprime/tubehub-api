@@ -22,4 +22,17 @@ class UserController extends Controller
     $user_list = User::get();
     return response()->json(['user_list' => $user_list], 200);
   }
+
+  /**
+   * Method description
+   *
+   * @param  \Illuminate\Http\Request  $request
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function profile(Request $request)
+  {
+    $user = $request->user();
+    $user->load('reviews.author');
+    return response()->json(['user' => $user], 200);
+  }
 }

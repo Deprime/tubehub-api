@@ -4,7 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\Auth\{
-  AuthController
+  AuthController,
+  SanctumController,
 };
 
 use App\Http\Controllers\Api\{
@@ -35,9 +36,24 @@ Route::namespace('Api')->group(function() {
     Route::prefix('auth')->group(function () {
       // Route::post('sms-code',   [AuthController::class, 'sms_code']);
       Route::post('signup',     [AuthController::class, 'signup']);
-      Route::post('signin',     [AuthController::class, 'login']);
+
+      Route::post('signin',     [AuthController::class, 'signin']);
       Route::post('logout',     [AuthController::class, 'logout']);
+
+      Route::prefix('sanctum')->group(function() {
+        Route::post('signup-email', [SanctumController::class, 'signupEmail']);
+        Route::post('token',        [SanctumController::class, 'token']);
+      });
     });
+
+    Route::prefix('app')->group(function() {
+      Route::group(['prefix' => '/sanctum', 'middleware' => ['auth:sanctum']], function () {
+        Route::prefix('profile')->group(function() {
+          Route::get('/',     [UserController::class, 'profile']);
+        });
+      });
+    });
+
 
     Route::prefix('authors')->group(function () {
       Route::get('/',           [AuthorController::class, 'list']);

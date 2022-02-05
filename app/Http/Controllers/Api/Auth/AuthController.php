@@ -33,7 +33,7 @@ class AuthController extends Controller
     if (!$sms)
       return response()->json($this->http_responses[404], 404);
 
-    $password = User::generate_password();
+    $password = User::generatePassword();
     $user = User::create([
       'phone'    => $input['phone'],
       'password' => Hash::make($password),
@@ -57,9 +57,9 @@ class AuthController extends Controller
 
 
   /**
-   * Login auth
+   * Signin
    */
-  public function login(Request $request)
+  public function signin(Request $request)
   {
     $input = $request->only(['email', 'password']);
     $user  = User::where('email', $input['email'])->first();
