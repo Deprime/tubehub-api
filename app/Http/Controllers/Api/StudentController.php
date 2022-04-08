@@ -41,6 +41,10 @@ class StudentController extends Controller
   public function get(Request $request, $student_id)
   {
     $student = Student::with($this->item_relations)->find($student_id);
+    // Not found
+    if (!$student) {
+      return response()->json([], Response::HTTP_NOT_FOUND);
+    }
     return response()->json(['student' => $student], Response::HTTP_OK);
   }
 
