@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Validator;
+use \Illuminate\Http\JsonResponse;
 
 use App\Models\User;
 use App\Models\Role;
@@ -32,7 +34,23 @@ class UserController extends Controller
   public function profile(Request $request)
   {
     $user = $request->user();
-    $user->load('reviews.author');
     return response()->json(['user' => $user], 200);
+  }
+
+
+  /**
+   * Get preformer profile
+   * @param  Integer $user_id
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function get(Request $request, int $user_id) {
+    $performer = User::find($user_id);
+    if ($performer) {
+      $performer->load('reviews.author');
+      return response()->json(['performer' => $performer], Response::HTTP_OK);
+    }
+    else {
+      return response()->json(['performer' => $performer], Response::HTTP_NOT_FOUND);
+    }
   }
 }

@@ -31,7 +31,7 @@ class SanctumController extends Controller
     $user = User::create([
       'email'    => $input['email'],
       'password' => Hash::make($input['password']),
-      'role'     => Role::PERFORMER,
+      // 'role'     => Role::PERFORMER,
     ]);
 
     if ($user->currentAccessToken()) {
@@ -41,6 +41,42 @@ class SanctumController extends Controller
     return response()->json(['token' => $token], 200);
   }
 
+  /**
+   * Finalize
+   *
+   * @param  \Illuminate\Http\Request  $request
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function finalize(Request $request)
+  {
+    $role = $request->only(['role']);
+
+    // Role validation
+    $validator = Validator::make($role, User::role_rules());
+    if ($validator->fails()) {
+      return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    $fields = [
+      Role::CUSTOMER  => ['role', 'nickname'],
+      Role::PERFORMER => ['role', 'first_name', 'last_name', 'birthdate'],
+    ];
+
+    // Profile fields validation
+    $rules = ($input['role'] === Role::CUSTOMER)
+           ? User::customer_rules()
+           : User::performer_rules();
+    $input = $request->only($fields[$role]);
+
+    $validator = Validator::make($input, $rules);
+    if ($validator->fails()) {
+      return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    $user = $request->user();
+    $user->update($input);
+    return response()->json(['user' => $user], 200);
+  }
 
   /**
    * Email signin

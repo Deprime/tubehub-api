@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 use Laravel\Sanctum\HasApiTokens;
 
 use Illuminate\Validation\Rule;
@@ -22,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\{
 
 use Carbon\Carbon;
 
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable
 {
   use HasApiTokens, HasFactory, Notifiable;
 
@@ -127,7 +126,6 @@ class User extends Authenticatable implements JWTSubject
 
  /**
    * Email signin rules
-   *
    * @return array
    */
   protected static function email_signin_rules()
@@ -138,6 +136,38 @@ class User extends Authenticatable implements JWTSubject
         'required',
         'min:6',
       ],
+    ];
+  }
+
+
+  protected static function role_rules()
+  {
+    return [
+      'role' => ['required', 'string', Rule::in(Role::USER_ROLES),],
+    ];
+  }
+
+  /**
+   * Customer rules
+   * @return array
+   */
+  protected static function customer_rules()
+  {
+    return [
+      'role'     => 'required|string',
+      'nickname' => 'required|string|min:6',
+    ];
+  }
+
+  /**
+   * Performer rules
+   * @return array
+   */
+  protected static function rerformer_rules()
+  {
+    return [
+      'role'     => 'required|string',
+      'nickname' => 'required|string|min:6',
     ];
   }
 
