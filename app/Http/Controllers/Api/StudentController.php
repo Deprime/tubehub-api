@@ -82,16 +82,13 @@ class StudentController extends Controller
     }
 
     $user  = $request->user();
-    $input = $request->only(Student::getFillable());
-
-    if (isset($input['author_id'])) {
-      unset($input['author_id']);
-    }
+    $input = $request->all($student->getFillable());
 
     $validator = Validator::make($input, Student::update_rules());
     if ($validator->fails())
       return response()->json(['errors' => $validator->errors()], Response::HTTP_UNPROCESSABLE_ENTITY);
 
+    $input['author_id'] = $student->author_id;
     $student->update($input);
     return response()->json(['student' => $student], Response::HTTP_OK);
   }
