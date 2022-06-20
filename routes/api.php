@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Auth\{
 };
 
 use App\Http\Controllers\Api\{
+  ProfileController,
   UserController,
   TaskController,
   RoleController,
@@ -33,10 +34,9 @@ Route::namespace('Api')->group(function() {
   Route::prefix('v1')->group(function () {
     // Authorization
     Route::prefix('auth')->group(function () {
-      Route::post('signin',         [SanctumController::class, 'token']);
+      Route::post('signin',         [SanctumController::class, 'signin']);
       Route::post('signup-email',   [SanctumController::class, 'signupEmail']);
-      Route::post('logout',         [AuthController::class, 'logout']);
-      // Route::post('sms-code',   [AuthController::class, 'sms_code']);
+      Route::delete('logout',       [SanctumController::class, 'logout']);
     });
 
     // Application
@@ -51,7 +51,8 @@ Route::namespace('Api')->group(function() {
         });
 
         Route::prefix('profile')->group(function() {
-          Route::get('/',                 [UserController::class, 'profile']);
+          Route::get('/',   [ProfileController::class, 'get']);
+          Route::put('/',   [ProfileController::class, 'update']);
         });
       });
 

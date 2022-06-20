@@ -124,7 +124,7 @@ class User extends Authenticatable
     ];
   }
 
- /**
+  /**
    * Email signin rules
    * @return array
    */
@@ -132,10 +132,7 @@ class User extends Authenticatable
   {
     return [
       'email'    => 'required|string|email:rfc,strict,filter',
-      'password' => [
-        'required',
-        'min:6',
-      ],
+      'password' => ['required','min:6',],
     ];
   }
 

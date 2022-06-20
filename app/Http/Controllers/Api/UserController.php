@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Validator;
-use \Illuminate\Http\JsonResponse;
+use \Illuminate\Http\{
+  Request,
+  JsonResponse,
+};
 
-use App\Models\User;
-use App\Models\Role;
+use App\Models\{
+  User,
+  Role,
+};
 
 class UserController extends Controller
 {
@@ -19,10 +22,10 @@ class UserController extends Controller
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\JsonResponse
    */
-  public function list(Request $request)
+  public function list(Request $request): JsonResponse
   {
     $user_list = User::get();
-    return response()->json(['user_list' => $user_list], 200);
+    return response()->json(['user_list' => $user_list], Response::HTTP_OK);
   }
 
   /**
@@ -31,10 +34,10 @@ class UserController extends Controller
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\JsonResponse
    */
-  public function profile(Request $request)
+  public function profile(Request $request): JsonResponse
   {
     $user = $request->user();
-    return response()->json(['user' => $user], 200);
+    return response()->json(['user' => $user], Response::HTTP_OK);
   }
 
 
@@ -43,14 +46,13 @@ class UserController extends Controller
    * @param  Integer $user_id
    * @return \Illuminate\Http\JsonResponse
    */
-  public function get(Request $request, int $user_id) {
+  public function get(Request $request, int $user_id): JsonResponse
+  {
     $performer = User::find($user_id);
     if ($performer) {
       $performer->load('reviews.author');
       return response()->json(['performer' => $performer], Response::HTTP_OK);
     }
-    else {
-      return response()->json(['performer' => $performer], Response::HTTP_NOT_FOUND);
-    }
+    return response()->json([], Response::HTTP_NOT_FOUND);
   }
 }

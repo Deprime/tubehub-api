@@ -19,7 +19,7 @@ class AuthorController extends Controller
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\JsonResponse
    */
-  public function get(Request $request, $author_id)
+  public function get(Request $request, $author_id): JsonResponse
   {
     $user_list = User::get();
     return response()->json(['user_list' => $user_list], 200);
@@ -31,7 +31,7 @@ class AuthorController extends Controller
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\JsonResponse
    */
-  public function list(Request $request)
+  public function list(Request $request): JsonResponse
   {
     $user_list = User::get();
     return response()->json(['user_list' => $user_list], 200);

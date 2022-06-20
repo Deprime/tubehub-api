@@ -4,12 +4,27 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\{
+  Hash,
+  Validator,
+  Auth
+};
 
-use App\Models\User;
-use App\Models\Role;
+use App\Services\{
+  AuthService
+};
+
+use App\Http\Requests\Auth\{
+  SigninRequest,
+  SignupEmailRequest
+};
+
+use App\Models\{
+  User,
+  Role,
+};
 
 class SanctumController extends Controller
 {
@@ -19,90 +34,53 @@ class SanctumController extends Controller
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\JsonResponse
    */
-  public function signupEmail(Request $request)
+  public function signupEmail(SignupEmailRequest $request): JsonResponse
   {
-    $input     = $request->only(['email', 'password']);
-    $validator = Validator::make($input, User::email_signup_rules());
+    $input = $request->validated();
 
-    if ($validator->fails()) {
-      return response()->json(['errors' => $validator->errors()], 422);
+    try {
+      $user  = AuthService::createUser($input['email'], $input['password']);
+    }
+    catch (\Exception $exception) {
+      return response()->json(['error' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY );
     }
 
-    $user = User::create([
-      'email'    => $input['email'],
-      'password' => Hash::make($input['password']),
-      // 'role'     => Role::PERFORMER,
-    ]);
-
-    if ($user->currentAccessToken()) {
-      $user->currentAccessToken()->delete();
-    }
-    $token = $user->createToken($request->email)->plainTextToken;
-    return response()->json(['token' => $token], 200);
+    $token = AuthService::createToken($request, $user);
+    return response()->json(['token' => $token]);
   }
 
   /**
-   * Finalize
+   * Signin
    *
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\JsonResponse
    */
-  public function finalize(Request $request)
+  public function signin(SigninRequest $request): JsonResponse
   {
-    $role = $request->only(['role']);
-
-    // Role validation
-    $validator = Validator::make($role, User::role_rules());
-    if ($validator->fails()) {
-      return response()->json(['errors' => $validator->errors()], 422);
+    $input = $request->validated();
+    if (!Auth::attempt($input)) {
+      return response()->json(['error' => 'The provided credentials are incorrect.'], Response::HTTP_UNAUTHORIZED);
     }
 
-    $fields = [
-      Role::CUSTOMER  => ['role', 'nickname'],
-      Role::PERFORMER => ['role', 'first_name', 'last_name', 'birthdate'],
-    ];
+    /** @var User $user */
+    $user  = $request->user();
+    $token = AuthService::createToken($request, $user);
 
-    // Profile fields validation
-    $rules = ($input['role'] === Role::CUSTOMER)
-           ? User::customer_rules()
-           : User::performer_rules();
-    $input = $request->only($fields[$role]);
+    return response()->json(['token' => $token, 'user' => $user]);
+  }
 
-    $validator = Validator::make($input, $rules);
-    if ($validator->fails()) {
-      return response()->json(['errors' => $validator->errors()], 422);
-    }
-
+  /**
+   * Logout
+   *
+   * @param  \Illuminate\Http\Request  $request
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function logout(Request $request): JsonResponse
+  {
     $user = $request->user();
-    $user->update($input);
-    return response()->json(['user' => $user], 200);
-  }
-
-  /**
-   * Email signin
-   *
-   * @param  \Illuminate\Http\Request  $request
-   * @return \Illuminate\Http\JsonResponse
-   */
-  public function token(Request $request)
-  {
-    $input     = $request->only(['email', 'password']);
-    $validator = Validator::make($input, User::email_signin_rules());
-
-    if ($validator->fails()) {
-      return response()->json(['errors' => $validator->errors()], 422);
+    if ($user) {
+      AuthService::revokeToken($user);
     }
-
-    $user = User::where('email', $request->email)->first();
-    if (!$user || !Hash::check($request->password, $user->password)) {
-      return response()->json(['error' => 'The provided credentials are incorrect.'], 401);
-    }
-
-    if ($user->currentAccessToken()) {
-      $user->currentAccessToken()->delete();
-    }
-
-    $token = $user->createToken($request->email)->plainTextToken;
-    return response()->json(['token' => $token], 200);
+    return response()->json([], Response::HTTP_NO_CONTEN);
   }
 }
